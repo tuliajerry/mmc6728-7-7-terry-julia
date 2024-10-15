@@ -1,22 +1,50 @@
-require('dotenv').config()
-const express = require('express')
-const exphbs = require('express-handlebars')
-// Import the sessions packages
-const apiRoutes = require('./routes/api-routes')
-const htmlRoutes = require('./routes/html-routes')
-const app = express()
+require('dotenv').config();
+const express = require('express');
+const exphbs = require('express-handlebars');
+const session = require('express-session'); 
+const MySQLStore = require('express-mysql-session')(session); 
+const db = require('./db'); 
+const apiRoutes = require('./routes/api-routes');
+const htmlRoutes = require('./routes/html-routes');
 
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
+const app = express();
 
-// Add code to use sessions with a MySQL Store
 
-app.engine('handlebars', exphbs.engine())
-app.set('view engine', 'handlebars')
+const sessionStore = new MySQLStore({
+  expiration: 86400000,
+  createDatabaseTable: true,
+  schema: {
+    tableName: 'sessions', 
+    columnNames: {
+      session_id: 'session_id',
+      expires: 'expires',
+      data: 'data',
+    },
+  },
+}, db);
 
-app.use(express.static('public'))
 
-app.use('/', htmlRoutes)
-app.use('/api', apiRoutes)
+app.use(session({
+  key: 'session_cookie_name', 
+  secret: process.env.SESSION_SECRET || 'default_secret', 
+  store: sessionStore, 
+  resave: false, 
+  saveUninitialized: false, 
+  cookie: {
+    secure: false, 
+    maxAge: 86400000, 
+  }
+}));
 
-module.exports = app
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.engine('handlebars', exphbs.engine());
+app.set('view engine', 'handlebars');
+
+app.use(express.static('public'));
+
+app.use('/', htmlRoutes);
+app.use('/api', apiRoutes);
+
+module.exports = app;
