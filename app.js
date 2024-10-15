@@ -11,7 +11,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 const sessionStore = new MySQLStore({}, db);
 app.use(session({
   key: 'session_cookie',
@@ -21,7 +20,7 @@ app.use(session({
   saveUninitialized: false,
   proxy: true,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24, 
+    maxAge: 1000 * 60 * 60 * 24,
   },
 }));
 
