@@ -58,4 +58,11 @@ router.get('/logout', async (req, res) => {
   });
 });
 
+router.use((req, res, next) => {
+  if (!req.session.loggedIn) {
+    req.session.loggedIn = false;
+  }
+  next();
+});
+
 module.exports = router;
