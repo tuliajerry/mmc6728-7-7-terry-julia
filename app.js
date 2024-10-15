@@ -1,38 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const exphbs = require('express-handlebars');
-const session = require('express-session'); 
-const MySQLStore = require('express-mysql-session')(session); 
-const db = require('./db'); 
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
+const db = require('./db');
 const apiRoutes = require('./routes/api-routes');
 const htmlRoutes = require('./routes/html-routes');
 
 const app = express();
 
 
-const sessionStore = new MySQLStore({
-  expiration: 86400000,
-  createDatabaseTable: true,
-  schema: {
-    tableName: 'sessions', 
-    columnNames: {
-      session_id: 'session_id',
-      expires: 'expires',
-      data: 'data',
-    },
-  },
-}, db);
+const sessionStore = new MySQLStore({}, db); 
 
 
 app.use(session({
-  key: 'session_cookie_name', 
-  secret: process.env.SESSION_SECRET || 'default_secret', 
+  key: 'session_cookie', 
+  secret: process.env.SESSION_SECRET, 
   store: sessionStore, 
   resave: false, 
   saveUninitialized: false, 
+  proxy: true,
   cookie: {
-    secure: false, 
-    maxAge: 86400000, 
+    maxAge: 1000 * 60 * 60 * 24 
   }
 }));
 
@@ -48,3 +37,4 @@ app.use('/', htmlRoutes);
 app.use('/api', apiRoutes);
 
 module.exports = app;
+
