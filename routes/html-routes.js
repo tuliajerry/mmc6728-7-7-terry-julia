@@ -1,43 +1,50 @@
-const router = require('express').Router()
-const db = require('../db')
-const checkAuth = require('../middleware/auth')
+const router = require('express').Router();
+const db = require('../db');
+const checkAuth = require('../middleware/auth');
+
+router.use((req, res, next) => {
+  if (!req.session.loggedIn) {
+    req.session.loggedIn = false;
+  }
+  next();
+});
 
 router.get('/', async (req, res) => {
-  const [rows] = await db.query('SELECT * FROM inventory;')
-  const data = {items: rows, loggedIn: req.session.loggedIn}
+  const [rows] = await db.query('SELECT * FROM inventory;');
+  const data = { items: rows, loggedIn: req.session.loggedIn };
   if (req.session.loggedIn) {
-    const [[{cartCount}]] = await db.query(
+    const [[{ cartCount }]] = await db.query(
       'SELECT SUM(quantity) AS cartCount FROM cart WHERE user_id=?;',
       [req.session.userId]
-    )
-    data.cartCount = cartCount || 0
+    );
+    data.cartCount = cartCount || 0;
   }
-  res.render('index', data)
-})
+  res.render('index', data);
+});
 
 router.get('/login', async (req, res) => {
-  res.render('login')
-})
+  res.render('login');
+});
 
 router.get('/create-account', async (req, res) => {
-  res.render('signup')
-})
+  res.render('signup');
+});
 
 router.get('/product/:id', async (req, res) => {
   const [[product]] = await db.query(
     'SELECT * FROM inventory WHERE id=?;',
     [req.params.id]
-  )
-  const data = {product, loggedIn: req.session.loggedIn}
+  );
+  const data = { product, loggedIn: req.session.loggedIn };
   if (req.session.loggedIn) {
-    const [[{cartCount}]] = await db.query(
+    const [[{ cartCount }]] = await db.query(
       'SELECT SUM(quantity) AS cartCount FROM cart WHERE user_id=?;',
       [req.session.userId]
-    )
-    data.cartCount = cartCount || 0
+    );
+    data.cartCount = cartCount || 0;
   }
-  res.render('product', data)
-})
+  res.render('product', data);
+});
 
 router.get('/cart', checkAuth, async (req, res) => {
   const [cartItems] = await db.query(
@@ -53,14 +60,15 @@ router.get('/cart', checkAuth, async (req, res) => {
       FROM cart LEFT JOIN inventory ON cart.inventory_id=inventory.id
       WHERE cart.user_id=?`,
     [req.session.userId]
-  )
+  );
   res.render('cart', {
     loggedIn: req.session.loggedIn,
     cartItems,
     total: cartItems.reduce(
       (total, item) => item.calculatedPrice + total, 0
     ).toFixed(2)
-  })
-})
+  });
+});
 
-module.exports = router
+module.exports = router;
+
